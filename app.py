@@ -18,7 +18,8 @@ if not api_key:
     load_dotenv()
     api_key = os.getenv("API_KEY")
 
-st.set_page_config(page_title="Smartech1 Research Co-Pilot", layout="wide")
+# Change this line
+st.set_page_config(page_title="Smartech1", page_icon="🤖", layout="wide")
 
 # 2. Sidebar: AI Chatbot
 st.sidebar.title("🤖 Smartech1 AI Assistant")
