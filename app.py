@@ -7,10 +7,12 @@ from dotenv import load_dotenv
 from google import genai
 from prediction_engine import predict_capacity
 
-# 1. Setup and Environment
-# This safely checks for the API key in Streamlit Secrets, 
-# falling back to your local .env file if it's not found.
-api_key = st.secrets.get("API_KEY")
+# 1. Robust Setup
+# This will prevent the crash regardless of whether the secrets file exists
+try:
+    api_key = st.secrets.get("API_KEY")
+except Exception:
+    api_key = None
 
 if not api_key:
     load_dotenv()
