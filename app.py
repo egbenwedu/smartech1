@@ -8,10 +8,11 @@ from google import genai
 from prediction_engine import predict_capacity
 
 # 1. Setup and Environment
-# This logic checks if we are on the cloud (uses st.secrets) or local (uses .env)
-if "API_KEY" in st.secrets:
-    api_key = st.secrets["API_KEY"]
-else:
+# This safely checks for the API key in Streamlit Secrets, 
+# falling back to your local .env file if it's not found.
+api_key = st.secrets.get("API_KEY")
+
+if not api_key:
     load_dotenv()
     api_key = os.getenv("API_KEY")
 
@@ -21,9 +22,10 @@ st.set_page_config(page_title="Smartech1 Research Co-Pilot", layout="wide")
 st.sidebar.title("🤖 Smartech1 AI Assistant")
 
 if api_key:
+    # Initialize the client only if the key is present
     client = genai.Client(api_key=api_key)
 else:
-    st.sidebar.error("API_KEY not found! Please check local .env or Streamlit Secrets.")
+    st.sidebar.error("API_KEY not found! Please check your Streamlit Secrets or .env file.")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -50,6 +52,8 @@ if prompt := st.sidebar.chat_input("Ask about materials or DAC..."):
                 st.session_state.messages.append({"role": "assistant", "content": response.text})
             except Exception as e:
                 st.error(f"AI Error: {e}")
+    else:
+        st.sidebar.error("Cannot query AI: API Key missing.")
 
 # 3. Main Content: Prediction UI
 st.title("Smartech1: CO2 Adsorbent Predictor")
@@ -74,7 +78,7 @@ with col2:
         inputs = st.session_state.last_prediction
         sweep_var = st.selectbox("Analyze Trend:", ['Amine Loading', 'Surface Area', 'Humidity', 'Temperature'])
         
-        # Sweep Logic
+        # Sweep Logic for Visualizing Trends
         if sweep_var == 'Amine Loading':
             vals = np.linspace(0, 50, 50)
             res = [predict_capacity(v, inputs['area'], inputs['hum'], inputs['temp']) for v in vals]
