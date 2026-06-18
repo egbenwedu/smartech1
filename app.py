@@ -8,18 +8,22 @@ from google import genai
 from prediction_engine import predict_capacity
 
 # 1. Setup and Environment
-load_dotenv()  # This ensures your .env file is loaded
+# This logic checks if we are on the cloud (uses st.secrets) or local (uses .env)
+if "API_KEY" in st.secrets:
+    api_key = st.secrets["API_KEY"]
+else:
+    load_dotenv()
+    api_key = os.getenv("API_KEY")
+
 st.set_page_config(page_title="Smartech1 Research Co-Pilot", layout="wide")
 
 # 2. Sidebar: AI Chatbot
 st.sidebar.title("🤖 Smartech1 AI Assistant")
-# Ensure your .env file has: API_KEY=your_key_here
-api_key = os.getenv("API_KEY")
 
 if api_key:
     client = genai.Client(api_key=api_key)
 else:
-    st.sidebar.error("API_KEY not found in .env file!")
+    st.sidebar.error("API_KEY not found! Please check local .env or Streamlit Secrets.")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -37,12 +41,15 @@ if prompt := st.sidebar.chat_input("Ask about materials or DAC..."):
     
     if api_key:
         with st.sidebar.chat_message("assistant"):
-            response = client.models.generate_content(
-                model="gemini-1.5-flash",
-                contents=prompt
-            )
-            st.markdown(response.text)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
+            try:
+                response = client.models.generate_content(
+                    model="gemini-1.5-flash",
+                    contents=prompt
+                )
+                st.markdown(response.text)
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
+            except Exception as e:
+                st.error(f"AI Error: {e}")
 
 # 3. Main Content: Prediction UI
 st.title("Smartech1: CO2 Adsorbent Predictor")
